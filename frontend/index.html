@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Database - OMDb API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #d63031;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .movie-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .movie-info {
+            padding: 20px;
+        }
+
+        .movie-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .movie-year {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .movie-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .movie-details {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .movie-details-header {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .movie-details-poster {
+            width: 200px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #f0f0f0;
+        }
+
+        .movie-details-info h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .movie-details-info p {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .movie-details-info strong {
+            color: #333;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .favorite-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .favorite-btn.active {
+            color: #e74c3c;
+        }
+
+        .favorite-btn:not(.active) {
+            color: #bdc3c7;
+        }
+
+        .movie-card {
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                min-width: auto;
+            }
+            
+            .movies-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .movie-details-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Movie Database</h1>
+            <p>Search and discover movies using the OMDb API</p>
+            <button class="btn" onclick="showFavorites()" style="margin-top: 15px; background: #28a745;">❤️ My Favorites</button>
+        </div>
+
+        <div class="search-section">
+            <form class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label for="title">Movie Title</label>
+                    <input type="text" id="title" name="title" placeholder="Enter movie title..." required>
+                </div>
+                <div class="form-group">
+                    <label for="year">Year (Optional)</label>
+                    <input type="number" id="year" name="year" placeholder="e.g., 2020" min="1900" max="2030">
+                </div>
+                <div class="form-group">
+                    <label for="genre">Genre (Optional)</label>
+                    <select id="genre" name="genre">
+                        <option value="">All Genres</option>
+                        <option value="Action">Action</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Animation">Animation</option>
+                        <option value="Biography">Biography</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Crime">Crime</option>
+                        <option value="Documentary">Documentary</option>
+                        <option value="Drama">Drama</option>
+                        <option value="Family">Family</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Film-Noir">Film-Noir</option>
+                        <option value="History">History</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Music">Music</option>
+                        <option value="Musical">Musical</option>
+                        <option value="Mystery">Mystery</option>
+                        <option value="Romance">Romance</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Sport">Sport</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="War">War</option>
+                        <option value="Western">Western</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Search</button>
+            </form>
+            <button class="btn" onclick="loadPopularMovies()" style="margin-top: 15px;">Show Popular Movies</button>
+        </div>
+
+        <div class="content">
+            <div id="loading" class="loading hidden">Loading...</div>
+            <div id="error" class="error hidden"></div>
+            <div id="moviesGrid" class="movies-grid"></div>
+            <div id="movieDetails" class="movie-details hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentView = 'search'; // 'search' or 'details'
+
+        // Search form handler
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const title = formData.get('title');
+            const year = formData.get('year');
+            const genre = formData.get('genre');
+
+            await searchMovies(title, year, genre);
+        });
+
+        // Search movies function
+        async function searchMovies(title, year = '', genre = '') {
+            showLoading();
+            hideError();
+            hideMovieDetails();
+
+            try {
+                // Sanitize inputs
+                const sanitizedTitle = title.trim();
+                const sanitizedYear = year ? year.toString().trim() : '';
+                const sanitizedGenre = genre ? genre.trim() : '';
+
+                if (!sanitizedTitle) {
+                    throw new Error('Please enter a movie title');
+                }
+
+                const params = new URLSearchParams({ 
+                    title: sanitizedTitle
+                });
+                if (sanitizedYear) params.append('year', sanitizedYear);
+                if (sanitizedGenre) params.append('genre', sanitizedGenre);
+
+                const response = await fetch(`/api/search?${params}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to search movies');
+                }
+
+                let movies = data.Search || [];
+                
+                // Filter by genre on frontend if specified
+                if (sanitizedGenre && movies.length > 0) {
+                    movies = await filterMoviesByGenre(movies, sanitizedGenre);
+                }
+                
+                displayMovies(movies);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Filter movies by genre
+        async function filterMoviesByGenre(movies, targetGenre) {
+            const filteredMovies = [];
+            
+            for (const movie of movies) {
+                try {
+                    // Get full movie details to check genre
+                    const response = await fetch(`/api/movie/${movie.imdbID}`);
+                    const movieDetails = await response.json();
+                    
+                    if (response.ok && movieDetails.Genre) {
+                        const genres = movieDetails.Genre.split(', ').map(g => g.trim());
+                        if (genres.includes(targetGenre)) {
+                            filteredMovies.push(movie);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error checking genre for ${movie.Title}:`, error);
+                    // If we can't check genre, include the movie to be safe
+                    filteredMovies.push(movie);
+                }
+            }
+            
+            return filteredMovies;
+        }
+
+        // Load popular movies
+        async function loadPopularMovies() {
+            showLoading();
+            hideError();
+            hideMovieDetails();
+
+            try {
+                const response = await fetch('/api/popular');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load popular movies');
+                }
+
+                displayMovies(data.Search || []);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Display movies in grid
+        async function displayMovies(movies) {
+            const grid = document.getElementById('moviesGrid');
+            currentView = 'search';
+
+            if (!movies || movies.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #666; font-size: 1.2rem;">No movies found</p>';
+                return;
+            }
+
+            grid.innerHTML = movies.map(movie => {
+                // Sanitize movie data to prevent XSS
+                const safeTitle = escapeHtml(movie.Title || 'Unknown Title');
+                const safeYear = escapeHtml(movie.Year || 'N/A');
+                const safeType = escapeHtml(movie.Type || 'movie');
+                const safeImdbId = escapeHtml(movie.imdbID || '');
+                const safePoster = movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : '';
+
+                return `
+                    <div class="movie-card" data-imdb-id="${safeImdbId}">
+                        <button class="favorite-btn" onclick="toggleFavorite(event, '${safeImdbId}', '${safeTitle}', '${safeYear}', '${safeType}', '${safePoster}')">❤️</button>
+                        <div class="movie-poster" onclick="showMovieDetails('${safeImdbId}')">
+                            ${safePoster 
+                                ? `<img src="${safePoster}" alt="${safeTitle}" style="width: 100%; height: 100%; object-fit: cover;">`
+                                : 'No Poster Available'
+                            }
+                        </div>
+                        <div class="movie-info" onclick="showMovieDetails('${safeImdbId}')">
+                            <div class="movie-title">${safeTitle}</div>
+                            <div class="movie-year">${safeYear}</div>
+                            <div class="movie-type">${safeType}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update favorite buttons after rendering
+            await updateFavoriteButtons();
+        }
+
+        // Show movie details
+        async function showMovieDetails(imdbId) {
+            if (!imdbId || !imdbId.startsWith('tt')) {
+                showError('Invalid movie ID');
+                return;
+            }
+
+            showLoading();
+            hideError();
+
+            try {
+                const response = await fetch(`/api/movie/${imdbId}`);
+                const movie = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(movie.error || 'Failed to load movie details');
+                }
+
+                displayMovieDetails(movie);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Display movie details
+        function displayMovieDetails(movie) {
+            const detailsDiv = document.getElementById('movieDetails');
+            const grid = document.getElementById('moviesGrid');
+            
+            currentView = 'details';
+            grid.innerHTML = '';
+
+            // Sanitize all movie data
+            const safeTitle = escapeHtml(movie.Title || 'Unknown Title');
+            const safeYear = escapeHtml(movie.Year || 'N/A');
+            const safeType = escapeHtml(movie.Type || 'movie');
+            const safeRuntime = escapeHtml(movie.Runtime || 'N/A');
+            const safeGenre = escapeHtml(movie.Genre || 'N/A');
+            const safeDirector = escapeHtml(movie.Director || 'N/A');
+            const safeActors = escapeHtml(movie.Actors || 'N/A');
+            const safeLanguage = escapeHtml(movie.Language || 'N/A');
+            const safeCountry = escapeHtml(movie.Country || 'N/A');
+            const safeReleased = escapeHtml(movie.Released || 'N/A');
+            const safeBoxOffice = escapeHtml(movie.BoxOffice || 'N/A');
+            const safeProduction = escapeHtml(movie.Production || 'N/A');
+            const safeImdbRating = escapeHtml(movie.imdbRating || 'N/A');
+            const safeImdbVotes = escapeHtml(movie.imdbVotes || 'N/A');
+            const safePlot = escapeHtml(movie.Plot || 'No plot available');
+            const safeAwards = escapeHtml(movie.Awards || 'N/A');
+            const safePoster = movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : '';
+
+            detailsDiv.innerHTML = `
+                <button class="back-btn" onclick="goBack()">← Back to Search</button>
+                <div class="movie-details-header">
+                    <div class="movie-details-poster">
+                        ${safePoster 
+                            ? `<img src="${safePoster}" alt="${safeTitle}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`
+                            : 'No Poster Available'
+                        }
+                    </div>
+                    <div class="movie-details-info">
+                        <h2>${safeTitle}</h2>
+                        <p><strong>Year:</strong> ${safeYear}</p>
+                        <p><strong>Type:</strong> ${safeType}</p>
+                        <p><strong>Runtime:</strong> ${safeRuntime}</p>
+                        <p><strong>Genre:</strong> ${safeGenre}</p>
+                        <p><strong>Director:</strong> ${safeDirector}</p>
+                        <p><strong>Actors:</strong> ${safeActors}</p>
+                        <p><strong>Language:</strong> ${safeLanguage}</p>
+                        <p><strong>Country:</strong> ${safeCountry}</p>
+                        <p><strong>Released:</strong> ${safeReleased}</p>
+                        <p><strong>Box Office:</strong> ${safeBoxOffice}</p>
+                        <p><strong>Production:</strong> ${safeProduction}</p>
+                        <p><strong>IMDb Rating:</strong> ${safeImdbRating}/10 (${safeImdbVotes} votes)</p>
+                        ${movie.Ratings && movie.Ratings.length > 0 ? `
+                            <p><strong>Other Ratings:</strong></p>
+                            <ul style="margin-left: 20px; color: #666;">
+                                ${movie.Ratings.map(rating => 
+                                    `<li>${escapeHtml(rating.Source || 'Unknown')}: ${escapeHtml(rating.Value || 'N/A')}</li>`
+                                ).join('')}
+                            </ul>
+                        ` : ''}
+                    </div>
+                </div>
+                <div>
+                    <h3>Plot</h3>
+                    <p style="line-height: 1.6; color: #333;">${safePlot}</p>
+                </div>
+                ${safeAwards !== 'N/A' ? `
+                    <div style="margin-top: 20px;">
+                        <h3>Awards</h3>
+                        <p style="color: #333;">${safeAwards}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            detailsDiv.classList.remove('hidden');
+        }
+
+        // Go back to search
+        function goBack() {
+            hideMovieDetails();
+            document.getElementById('moviesGrid').innerHTML = '';
+            currentView = 'search';
+        }
+
+        // Utility functions
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        function hideMovieDetails() {
+            document.getElementById('movieDetails').classList.add('hidden');
+        }
+
+        // HTML escape function to prevent XSS
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return text;
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Favorites functionality
+        async function toggleFavorite(event, imdbId, title, year, type, poster) {
+            event.stopPropagation(); // Prevent triggering movie details
+            
+            try {
+                const favoriteBtn = event.target;
+                const isCurrentlyFavorite = favoriteBtn.classList.contains('active');
+                
+                if (isCurrentlyFavorite) {
+                    // Remove from favorites
+                    await removeFromFavorites(imdbId);
+                    favoriteBtn.classList.remove('active');
+                    showMessage('Removed from favorites', 'success');
+                } else {
+                    // Add to favorites
+                    const movieData = {
+                        imdbID: imdbId,
+                        Title: title,
+                        Year: year,
+                        Type: type,
+                        Poster: poster
+                    };
+                    await addToFavorites(movieData);
+                    favoriteBtn.classList.add('active');
+                    showMessage('Added to favorites', 'success');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        async function addToFavorites(movieData) {
+            const response = await fetch('/api/favorites', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(movieData)
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to add to favorites');
+            }
+        }
+
+        async function removeFromFavorites(imdbId) {
+            const response = await fetch(`/api/favorites/${imdbId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to remove from favorites');
+            }
+        }
+
+        async function updateFavoriteButtons() {
+            const favoriteButtons = document.querySelectorAll('.favorite-btn');
+            
+            for (const btn of favoriteButtons) {
+                const imdbId = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+                try {
+                    const response = await fetch(`/api/favorites/${imdbId}`);
+                    const data = await response.json();
+                    
+                    if (data.isFavorite) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                } catch (error) {
+                    console.error('Error checking favorite status:', error);
+                }
+            }
+        }
+
+        async function showFavorites() {
+            showLoading();
+            hideError();
+            hideMovieDetails();
+
+            try {
+                const response = await fetch('/api/favorites');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to load favorites');
+                }
+
+                if (data.favorites.length === 0) {
+                    document.getElementById('moviesGrid').innerHTML = 
+                        '<p style="text-align: center; color: #666; font-size: 1.2rem;">No favorites yet. Add some movies to your favorites!</p>';
+                } else {
+                    displayMovies(data.favorites);
+                }
+                
+                currentView = 'favorites';
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1000;
+                background: ${type === 'success' ? '#28a745' : '#17a2b8'};
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // Load popular movies on page load
+        window.addEventListener('load', () => {
+            loadPopularMovies();
+        });
+    </script>
+</body>
+</html> 
